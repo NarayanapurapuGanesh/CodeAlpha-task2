@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Platform</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #000000;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 60%;
+            margin: 40px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .post-box textarea, .comment-box input {
+            width: 90%;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 14px;
+            outline: none;
+        }
+        .post-box textarea {
+            height: 60px;
+            resize: none;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+            margin-top: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .delete-btn {
+            background: #dc3545;
+        }
+        .delete-btn:hover {
+            background: #c82333;
+        }
+        .post {
+            background: #fff;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+        .like-btn, .comment-btn {
+            cursor: pointer;
+            color: #007bff;
+            border: none;
+            background: none;
+            font-size: 14px;
+            margin-top: 5px;
+            transition: color 0.3s;
+        }
+        .like-btn:hover, .comment-btn:hover {
+            color: #0056b3;
+        }
+        .comment-box {
+            margin-top: 10px;
+        }
+        .comments {
+            margin-top: 10px;
+            padding-left: 10px;
+        }
+        .comment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .delete-comment-btn {
+            color: rgb(0, 0, 0);
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>My Social Media</h1>
+        <div class="post-box">
+            <textarea id="postInput" placeholder="Write a post..."></textarea>
+            <button onclick="addPost()">Post</button>
+        </div>
+        <div id="postsContainer"></div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", loadPosts);
+
+        function addPost() {
+            let postText = document.getElementById("postInput").value;
+            if (!postText) return alert("Please write something!");
+
+            let posts = JSON.parse(localStorage.getItem("posts")) || [];
+            let newPost = { id: Date.now(), text: postText, likes: 0, comments: [] };
+
+            posts.push(newPost);
+            localStorage.setItem("posts", JSON.stringify(posts));
+
+            document.getElementById("postInput").value = "";
+            loadPosts();
+        }
+
+        function loadPosts() {
+            let postsContainer = document.getElementById("postsContainer");
+            postsContainer.innerHTML = "";
+
+            let posts = JSON.parse(localStorage.getItem("posts")) || [];
+
+            posts.forEach((post, index) => {
+                let postElement = document.createElement("div");
+                postElement.classList.add("post");
+                postElement.innerHTML = `
+                    <p>${post.text}</p>
+                    <button class="like-btn" onclick="likePost(${index})">Like (${post.likes})</button>
+                    <button class="delete-btn" onclick="deletePost(${index})">Delete</button>
+                    <div class="comment-box">
+                        <input type="text" id="commentInput-${index}" placeholder="Write a comment...">
+                        <button onclick="addComment(${index})">Comment</button>
+                    </div>
+                    <div id="comments-${index}" class="comments"></div>
+                `;
+                postsContainer.appendChild(postElement);
+                loadComments(index);
+            });
+        }
+
+        function likePost(index) {
+            let posts = JSON.parse(localStorage.getItem("posts"));
+            posts[index].likes++;
+            localStorage.setItem("posts", JSON.stringify(posts));
+            loadPosts();
+        }
+
+        function deletePost(index) {
+            let posts = JSON.parse(localStorage.getItem("posts"));
+            posts.splice(index, 1);
+            localStorage.setItem("posts", JSON.stringify(posts));
+            loadPosts();
+        }
+
+        function addComment(index) {
+            let commentInput = document.getElementById(`commentInput-${index}`);
+            let commentText = commentInput.value;
+            if (!commentText) return;
+
+            let posts = JSON.parse(localStorage.getItem("posts"));
+            posts[index].comments.push(commentText);
+            localStorage.setItem("posts", JSON.stringify(posts));
+
+            commentInput.value = "";
+            loadComments(index);
+        }
+
+        function loadComments(index) {
+            let posts = JSON.parse(localStorage.getItem("posts")) || [];
+            let commentsContainer = document.getElementById(`comments-${index}`);
+            commentsContainer.innerHTML = posts[index].comments.map((comment, commentIndex) => `
+                <div class="comment-item">
+                    <p>💬 ${comment}</p>
+                    <span class="delete-comment-btn" onclick="deleteComment(${index}, ${commentIndex})">❌</span>
+                </div>
+            `).join("");
+        }
+
+        function deleteComment(postIndex, commentIndex) {
+            let posts = JSON.parse(localStorage.getItem("posts"));
+            posts[postIndex].comments.splice(commentIndex, 1);
+            localStorage.setItem("posts", JSON.stringify(posts));
+            loadComments(postIndex);
+        }
+    </script>
+</body>
+</html>
