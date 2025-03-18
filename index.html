@@ -20,13 +20,14 @@
             border-radius: 15px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-        .post-box textarea, .comment-box input {
+        .post-box textarea, .comment-box input, .post-box input {
             width: 90%;
             border: 2px solid #ccc;
             border-radius: 8px;
             padding: 10px;
             font-size: 14px;
             outline: none;
+            margin-top: 5px;
         }
         .post-box textarea {
             height: 60px;
@@ -79,16 +80,10 @@
             margin-top: 10px;
             padding-left: 10px;
         }
-        .comment-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .delete-comment-btn {
-            color: rgb(0, 0, 0);
-            cursor: pointer;
-            font-weight: bold;
-            margin-left: 10px;
+        .post img {
+            max-width: 100%;
+            margin-top: 10px;
+            border-radius: 10px;
         }
     </style>
 </head>
@@ -97,6 +92,7 @@
         <h1>My Social Media</h1>
         <div class="post-box">
             <textarea id="postInput" placeholder="Write a post..."></textarea>
+            <input type="file" id="imageInput" accept="image/*">
             <button onclick="addPost()">Post</button>
         </div>
         <div id="postsContainer"></div>
@@ -107,16 +103,28 @@
 
         function addPost() {
             let postText = document.getElementById("postInput").value;
-            if (!postText) return alert("Please write something!");
+            let imageFile = document.getElementById("imageInput").files[0];
+            
+            if (!postText && !imageFile) return alert("Please write something or upload an image!");
 
-            let posts = JSON.parse(localStorage.getItem("posts")) || [];
-            let newPost = { id: Date.now(), text: postText, likes: 0, comments: [] };
+            let reader = new FileReader();
+            reader.onload = function (e) {
+                let posts = JSON.parse(localStorage.getItem("posts")) || [];
+                let newPost = { id: Date.now(), text: postText, image: imageFile ? e.target.result : "", likes: 0, comments: [] };
+                
+                posts.push(newPost);
+                localStorage.setItem("posts", JSON.stringify(posts));
 
-            posts.push(newPost);
-            localStorage.setItem("posts", JSON.stringify(posts));
+                document.getElementById("postInput").value = "";
+                document.getElementById("imageInput").value = "";
+                loadPosts();
+            };
 
-            document.getElementById("postInput").value = "";
-            loadPosts();
+            if (imageFile) {
+                reader.readAsDataURL(imageFile);
+            } else {
+                reader.onload();
+            }
         }
 
         function loadPosts() {
@@ -130,8 +138,9 @@
                 postElement.classList.add("post");
                 postElement.innerHTML = `
                     <p>${post.text}</p>
-                    <button class="like-btn" onclick="likePost(${index})">Like (${post.likes})</button>
-                    <button class="delete-btn" onclick="deletePost(${index})">Delete</button>
+                    ${post.image ? `<img src="${post.image}" alt="Post Image">` : ""}
+                    <button class="like-btn" onclick="likePost(${index})">Like❤️ (${post.likes})</button>
+                    <button class="delete-btn" onclick="deletePost(${index})">Delete🗑️</button>
                     <div class="comment-box">
                         <input type="text" id="commentInput-${index}" placeholder="Write a comment...">
                         <button onclick="addComment(${index})">Comment</button>
@@ -174,10 +183,7 @@
             let posts = JSON.parse(localStorage.getItem("posts")) || [];
             let commentsContainer = document.getElementById(`comments-${index}`);
             commentsContainer.innerHTML = posts[index].comments.map((comment, commentIndex) => `
-                <div class="comment-item">
-                    <p>💬 ${comment}</p>
-                    <span class="delete-comment-btn" onclick="deleteComment(${index}, ${commentIndex})">❌</span>
-                </div>
+                <p>💬 ${comment} <button class="delete-btn" onclick="deleteComment(${index}, ${commentIndex})">Delete🗑️</button></p>
             `).join("");
         }
 
